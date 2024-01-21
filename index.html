@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rectangle Collision Detection</title>
+    <style>
+        canvas {
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="collisionCanvas" width="400" height="400"></canvas>
+
+    <script>
+    const canvas = document.getElementById('collisionCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const rect1 = { x: 50, y: 50, width: 50, height: 50, color: 'red' };
+    const rect2 = { x: 200, y: 200, width: 50, height: 50, color: 'blue', speed: 2, isMoving: false, targetX: 200, targetY: 200 };
+
+    canvas.addEventListener('click', (e) => {
+        const clickX = e.clientX - canvas.getBoundingClientRect().left - rect2.width / 2;
+        const clickY = e.clientY - canvas.getBoundingClientRect().top - rect2.height / 2;
+
+        rect2.targetX = clickX;
+        rect2.targetY = clickY;
+        rect2.isMoving = true;
+    });
+
+        function isCollidingNow() {
+            return (
+                rect1.x < rect2.x + rect2.width &&
+                rect1.x + rect1.width > rect2.x &&
+                rect1.y < rect2.y + rect2.height &&
+                rect1.y + rect1.height > rect2.y
+            );
+        }
+
+        function willCollide() {
+        const corners = [
+            { x: rect2.x, y: rect2.y },
+            { x: rect2.x + rect2.width, y: rect2.y },
+            { x: rect2.x, y: rect2.y + rect2.height },
+            { x: rect2.x + rect2.width, y: rect2.y + rect2.height }
+        ];
+
+        for (const corner of corners) {
+            const distanceToRect1 = distancePointToRect(corner, rect1);
+            if (distanceToRect1 < rect1.width / 2) {
+                return true; // Collision detected for at least one corner
+            }
+        }
+
+        return false; // No collision detected for any corner
+    }
+
+    function distancePointToRect(point, rect) {
+        const dx = Math.max(rect.x - point.x, 0, point.x - (rect.x + rect.width));
+        const dy = Math.max(rect.y - point.y, 0, point.y - (rect.y + rect.height));
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+
+    function drawsquare(square) {
+        ctx.fillStyle = square.color;
+        ctx.fillRect(square.x, square.y, square.width, square.height);
+    }
+
+    function draw() {
+        // Reset canvas border color at the beginning
+        canvas.style.border = '1px solid #000';
+
+        // Collision check
+        if (willCollide()) {
+            rect1.color = 'red';
+            rect2.color = 'blue';
+            canvas.style.border = '2px solid red';
+
+            if (isCollidingNow()) {
+                rect1.color = 'green';
+                rect2.color = 'green';
+            }
+        } else {
+            rect1.color = 'red';
+            rect2.color = 'blue';
+        }
+
+        // Draw the rectangles
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = rect1.color;
+        ctx.fillRect(rect1.x, rect1.y, rect1.width, rect1.height);
+
+        if (rect2.isMoving) {
+            moveRect2();
+        }
+
+        drawsquare(rect2);
+    }
+
+    function moveRect2() {
+        const dx = rect2.targetX - rect2.x;
+        const dy = rect2.targetY - rect2.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance > rect2.speed) {
+            rect2.x += (dx / distance) * rect2.speed;
+            rect2.y += (dy / distance) * rect2.speed;
+        } else {
+            rect2.x = rect2.targetX;
+            rect2.y = rect2.targetY;
+            rect2.isMoving = false;
+        }
+
+        // Ensure rect2 stays within the canvas boundaries
+        rect2.x = Math.max(0, Math.min(rect2.x, canvas.width - rect2.width));
+        rect2.y = Math.max(0, Math.min(rect2.y, canvas.height - rect2.height));
+    }
+
+    function animate() {
+        draw();
+        requestAnimationFrame(animate);
+    }
+
+    animate(); // Start the animation loop
+</script>
+
+    
+</body>
+</html>
